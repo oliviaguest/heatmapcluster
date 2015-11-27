@@ -27,7 +27,8 @@ def heatmapcluster(x, row_labels, col_labels,
                    top_dendrogram=True,
                    xlabel_rotation=-45,
                    ylabel_rotation=0,
-                   figsize=(12, 8)):
+                   figsize=(12, 8)
+                   left_pdist_metric='jaccard'):
     """
     Use matplotlib to generate a heatmap with row and column dendrograms.
 
@@ -76,7 +77,7 @@ def heatmapcluster(x, row_labels, col_labels,
         plot.
 
     """
-    lnk0 = linkage(pdist(x))
+    lnk0 = linkage(pdist(x, left_pdist_metric))
     if top_dendrogram:
         lnk1 = linkage(pdist(x.T))
     else:
