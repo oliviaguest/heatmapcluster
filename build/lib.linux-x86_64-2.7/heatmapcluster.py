@@ -8,7 +8,7 @@ from scipy.spatial.distance import pdist
 from scipy.cluster.hierarchy import linkage, dendrogram
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-
+from matplotlib.ticker import MaxNLocator
 
 __version__ = "0.0.1"
 
@@ -18,7 +18,10 @@ class HeatmapClusterResults(object):
     def __init__(self, **kwds):
         for name, value in kwds.items():
             setattr(self, name, value)
-
+def unique(seq):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if not (x in seen or seen_add(x))]
 
 def heatmapcluster(x, row_labels, col_labels,
                    num_row_clusters=None, num_col_clusters=None,
@@ -28,7 +31,9 @@ def heatmapcluster(x, row_labels, col_labels,
                    xlabel_rotation=-45,
                    ylabel_rotation=0,
                    figsize=(12, 8),
-                   left_pdist_metric='jaccard'):
+                   left_pdist_metric='jaccard',
+                   col_labels_show = True,
+                   group_row_labels = False):
     """
     Use matplotlib to generate a heatmap with row and column dendrograms.
 
@@ -147,17 +152,31 @@ def heatmapcluster(x, row_labels, col_labels,
     halfxw = 0.5*xlim/ncols
 
     ax_heatmap.xaxis.set_ticks(np.linspace(halfxw, xlim - halfxw, ncols))
+
     if top_dendrogram:
         ax_heatmap.xaxis.set_ticklabels(np.array(col_labels)[dg1['leaves']])
     else:
         ax_heatmap.xaxis.set_ticklabels(col_labels)
-
+    ax_heatmap.xaxis.set_visible(col_labels_show)
+    
     ylim = ax_heatmap.get_ylim()[1]
     nrows = len(row_labels)
     halfyw = 0.5*ylim/nrows
 
     ax_heatmap.yaxis.set_ticks(np.linspace(halfyw, ylim - halfyw, nrows))
     ax_heatmap.yaxis.set_ticklabels(np.array(row_labels)[dg0['leaves']])
+
+    if group_row_labels:
+     tmp_row_labels = np.array(row_labels)[dg0['leaves']]
+     alt_row_labels = []
+     for l in tmp_row_labels:
+       alt_row_labels.append(l[0])
+     alt_row_labels = unique(alt_row_labels)  
+     print alt_row_labels  
+     #ax_heatmap.yaxis.set_ticks(range(len(alt_row_labels)))
+     
+     ax_heatmap.yaxis.set_major_locator(MaxNLocator(len(alt_row_labels)))
+     ax_heatmap.yaxis.set_ticklabels(alt_row_labels)  
 
     # Make the dendrogram labels invisible.
     plt.setp(ax_dendleft.get_yticklabels() + ax_dendleft.get_xticklabels(),
@@ -184,6 +203,8 @@ def heatmapcluster(x, row_labels, col_labels,
     ylbls = ax_heatmap.yaxis.get_ticklabels()
     plt.setp(ylbls, rotation=ylabel_rotation)
     plt.setp(ylbls, fontsize=label_fontsize)
+
+
 
     if show_colorbar:
         cb = plt.colorbar(im, cax=ax_colorbar)
